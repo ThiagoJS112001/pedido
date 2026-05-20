@@ -48,9 +48,9 @@ const BRIDGE_SLIDES = [
   { type: 'photo', photo: '/photos/foto-11.jpg', text: 'O dia em que eu conheci o bico do papagaio' },
   { type: 'text',  text: 'Brincadeira' },
   { type: 'text',  text: 'Esse foi o dia que me levou a conhecer a pessoa que tem me alegrado cada dia mais' },
-  { type: 'text',  text: 'Com boas risadas, histórias e por ser você mesmo' },
+  { type: 'text',  text: 'Com boas risadas, histórias e por ser você mesma' },
   { type: 'text',  text: 'Sabe quem é essa pessoa?' },
-  { type: 'text',  text: 'Você mesmo, DOTORA' },
+  { type: 'text',  text: 'Você mesma, DOTORA' },
   { type: 'text',  text: 'E lembra daquele dia?' },
 ]
 
