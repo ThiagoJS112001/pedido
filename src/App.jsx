@@ -105,6 +105,7 @@ export default function App() {
   const [phase, setPhase]         = useState('terminal')
   const [shown, setShown]         = useState([])
   const [photoIdx, setPhotoIdx]   = useState(0)
+  const [photoFading, setPhotoFading] = useState(false)
   const [c1TextIdx, setC1TextIdx] = useState(0)
   const [c1Displayed, setC1Displayed] = useState('')
   const [c1Typing, setC1Typing]   = useState(false)
@@ -126,6 +127,8 @@ export default function App() {
   const noRef      = useRef(null)
   const heartIdRef = useRef(0)
   const bgmRef     = useRef(null)
+  const audioLockedRef = useRef(false)
+  const unlockHandlerRef = useRef(null)
 
   async function pauseBeforeNext(action, delay = 900) {
     if (isAdvancing) return
@@ -160,7 +163,6 @@ export default function App() {
   // ── música de fundo (opcional) ──
   useEffect(() => {
     let disposed = false
-    let unlockHandler = null
 
     async function setupBgm() {
       try {
@@ -168,27 +170,46 @@ export default function App() {
         if (!head.ok || disposed) return
 
         const audio = new Audio('/audio/nossa-musica.mp3')
-        audio.loop = true
+        audio.loop = false
         audio.volume = 0.09
         bgmRef.current = audio
 
         const tryPlay = () => {
+          if (audioLockedRef.current) return
           audio.play().catch(() => {})
         }
 
-        unlockHandler = tryPlay
+        const handleEnded = () => {
+          if (audioLockedRef.current) return
+          audio.currentTime = 0
+          audio.play().catch(() => {})
+        }
+
+        unlockHandlerRef.current = tryPlay
         tryPlay()
         window.addEventListener('pointerdown', tryPlay)
+        audio.addEventListener('ended', handleEnded)
+
+        return () => {
+          audio.removeEventListener('ended', handleEnded)
+        }
       } catch {
         // Sem arquivo de áudio: segue sem música.
       }
     }
 
-    setupBgm()
+    let cleanupAudioListeners = null
+    setupBgm().then(cleanup => {
+      if (typeof cleanup === 'function') cleanupAudioListeners = cleanup
+    })
 
     return () => {
       disposed = true
-      if (unlockHandler) window.removeEventListener('pointerdown', unlockHandler)
+      if (cleanupAudioListeners) cleanupAudioListeners()
+      if (unlockHandlerRef.current) {
+        window.removeEventListener('pointerdown', unlockHandlerRef.current)
+        unlockHandlerRef.current = null
+      }
       if (bgmRef.current) {
         bgmRef.current.pause()
         bgmRef.current.src = ''
@@ -292,21 +313,42 @@ export default function App() {
     return () => clearInterval(id)
   }, [phase, propIdx])
 
-  // ── pausa da música a partir da pergunta final ──
+  // ── trava da música a partir da tela de sim/não ──
   useEffect(() => {
     const audio = bgmRef.current
     if (!audio) return
 
-    const reachedFinalQuestion = phase === 'proposal' && propIdx >= MUSIC_PAUSE_FROM_SLIDE
-    const afterQuestion = said === 'yes' || said === 'ending'
+    const shouldLockAudio =
+      (phase === 'proposal' && propIdx >= MUSIC_PAUSE_FROM_SLIDE) ||
+      said === 'yes' ||
+      said === 'ending'
 
-    if (reachedFinalQuestion || afterQuestion) {
+    if (shouldLockAudio) {
+      audioLockedRef.current = true
       audio.pause()
+      if (unlockHandlerRef.current) {
+        window.removeEventListener('pointerdown', unlockHandlerRef.current)
+        unlockHandlerRef.current = null
+      }
     }
   }, [phase, propIdx, said])
 
   function skipProp() {
     if (propTyping) { setPropDisplayed(PROPOSAL_SLIDES[propIdx]); setPropTyping(false) }
+  }
+
+  function advancePhoto() {
+    if (photoFading) return
+    setPhotoFading(true)
+
+    setTimeout(() => {
+      if (photoIdx >= DATE_PHOTOS.length - 1) {
+        setPhase('proposal')
+      } else {
+        setPhotoIdx(p => p + 1)
+      }
+      setPhotoFading(false)
+    }, 180)
   }
 
   // ── intro do capítulo 2 ──
@@ -328,11 +370,10 @@ export default function App() {
   useEffect(() => {
     if (phase !== 'c2' || c2Intro) return
     const id = setTimeout(() => {
-      if (photoIdx >= DATE_PHOTOS.length - 1) setPhase('proposal')
-      else setPhotoIdx(p => p + 1)
+      advancePhoto()
     }, 2500)
     return () => clearTimeout(id)
-  }, [phase, c2Intro, photoIdx])
+  }, [phase, c2Intro, photoIdx, photoFading])
 
   // ── terminal ──
   if (phase === 'terminal') {
@@ -454,7 +495,7 @@ export default function App() {
           </p>
           {!bridgeTyping && (
             <button className={`ch-btn${isAdvancing ? ' is-paused' : ''}`} disabled={isAdvancing} onClick={e => { e.stopPropagation(); nextBridge() }}>
-              {isAdvancing ? '...' : isLast ? 'sim, lembro 🤍' : 'continuar →'}
+              {isAdvancing ? '...' : 'continuar →'}
             </button>
           )}
         </div>
@@ -498,13 +539,10 @@ export default function App() {
         <div className="c2-wrap">
           <div
             className="stage"
-            onClick={() => {
-              if (photoIdx >= DATE_PHOTOS.length - 1) setPhase('proposal')
-              else setPhotoIdx(p => p + 1)
-            }}
+            onClick={advancePhoto}
             style={{ cursor: 'pointer' }}
           >
-            <img key={photoIdx} src={DATE_PHOTOS[photoIdx]} alt={`Foto ${photoIdx + 1}`} className="stage-img" />
+            <img key={photoIdx} src={DATE_PHOTOS[photoIdx]} alt={`Foto ${photoIdx + 1}`} className={`stage-img${photoFading ? ' is-fading' : ''}`} />
             <div key={`bar-${photoIdx}`} className="photo-progress" />
           </div>
           <div className="c2-footer">

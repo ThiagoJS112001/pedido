@@ -218,21 +218,33 @@
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 62vh;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.15));
+  overflow: hidden;
 }
 
 .stage-img {
-  max-height: 58vh;
+  max-height: 56vh;
   max-width: 100%;
   border-radius: 12px;
   object-fit: contain;
   box-shadow: 0 12px 64px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.05);
   display: block;
-  animation: photoIn 0.4s ease;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  animation: photoIn 0.45s ease;
+  transition: opacity 0.24s ease, transform 0.35s ease;
+  will-change: opacity, transform;
 }
 
-.stage-img:hover {
-  transform: scale(1.03);
+.stage:hover .stage-img {
+  transform: scale(1.015);
+}
+
+.stage-img.is-fading {
+  opacity: 0;
+  transform: scale(0.985);
 }
 
 @keyframes photoIn {
@@ -422,7 +434,7 @@
 
 /* ─── Tela YES ─── */
 .yes-screen {
-  background: #0d0d0d;
+  background: radial-gradient(ellipse at 50% -10%, #131620 0%, #0a0a0c 65%);
   position: relative;
   overflow: hidden;
 }
@@ -817,7 +829,7 @@
 /* ─── YES screen ─── */
 .yes-screen {
   flex-direction: column;
-  background: linear-gradient(135deg, #fce4ec, #f8bbd0, #ffccdd);
+  background: radial-gradient(ellipse at 50% -10%, #131620 0%, #0a0a0c 65%);
   overflow: hidden;
   position: relative;
 }
