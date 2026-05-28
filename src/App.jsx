@@ -80,6 +80,8 @@ const PROPOSAL_SLIDES = [
   'Quer namorar comigo?',
 ]
 
+const MUSIC_PAUSE_FROM_SLIDE = PROPOSAL_SLIDES.indexOf('Quer namorar comigo?')
+
 const HEARTS = ['❤️', '🩷', '🧡', '💛', '💚', '💙', '💜', '🤍']
 
 const NO_MESSAGES = [
@@ -289,6 +291,19 @@ export default function App() {
     }, 35)
     return () => clearInterval(id)
   }, [phase, propIdx])
+
+  // ── pausa da música a partir da pergunta final ──
+  useEffect(() => {
+    const audio = bgmRef.current
+    if (!audio) return
+
+    const reachedFinalQuestion = phase === 'proposal' && propIdx >= MUSIC_PAUSE_FROM_SLIDE
+    const afterQuestion = said === 'yes' || said === 'ending'
+
+    if (reachedFinalQuestion || afterQuestion) {
+      audio.pause()
+    }
+  }, [phase, propIdx, said])
 
   function skipProp() {
     if (propTyping) { setPropDisplayed(PROPOSAL_SLIDES[propIdx]); setPropTyping(false) }
