@@ -169,7 +169,7 @@ export default function App() {
 
         const audio = new Audio('/audio/nossa-musica.mp3')
         audio.loop = true
-        audio.volume = 0.14
+        audio.volume = 0.09
         bgmRef.current = audio
 
         const tryPlay = () => {
