@@ -6,21 +6,21 @@ const DATE_PHOTOS = Array.from({ length: 7 }, (_, i) =>
 )
 
 const LINES = [
-  { type: 'cmd', text: 'ssh camila@lindona.local' },
-  { type: 'out', text: 'Estabelecendo conexão segura...' },
-  { type: 'ok',  text: '✓  Conexão estabelecida' },
-  { type: 'cmd', text: './carregar_memorias.sh' },
-  { type: 'out', text: 'Procurando arquivos especiais...' },
-  { type: 'ok',  text: '✓  memórias encontradas' },
-  { type: 'cmd', text: 'cat mensagem.txt' },
+  { type: 'cmd', text: 'iniciando_sistema_do_amor.exe' },
+  { type: 'out', text: 'Carregando sentimentos...' },
+  { type: 'ok',  text: '✓  Você encontrada' },
+  { type: 'cmd', text: './abrir_memorias_do_coracao.sh' },
+  { type: 'out', text: 'Relembrando cada sorriso...' },
+  { type: 'ok',  text: '✓  memórias especiais restauradas' },
+  { type: 'cmd', text: 'cat declaracao_final.txt' },
   { type: 'msg', text: 'É incrível estar com você, Camila.' },
   { type: 'msg', text: 'Obrigado por cada segundo.' },
-  { type: 'cmd', text: './abrir_galeria.sh' },
-  { type: 'ok',  text: '✓  Carregando nossa história...' },
+  { type: 'cmd', text: './modo_coragem_on.sh' },
+  { type: 'ok',  text: '✓  Pronto para o grande pedido...' },
 ]
 
 const C1_TEXTS = [
-  'Nossa história começa a muito tempo, mesmo na escola, eu já te achava uma pessoa incrível, inteligente, dedicada e esforçada',
+  'Nossa história começa há muito tempo, mesmo na escola, eu já te achava uma pessoa incrível',
   'Após sua formatura, acabou que não nos viamos mais, e também não tínhamos tanto contato, mas mesmo assim, isso não impediu de estarmos aqui hoje',
   'Sei que uma de suas conquistas, começa com você se tornando uma "DOTORA" com muito esforço.',
   'E mesmo não acompanhando essa fase de perto, sinto muito orgulho do que você conquistou e do que se tornou',
@@ -75,6 +75,7 @@ const PROPOSAL_SLIDES = [
   'E como eu quero continuar tendo você na minha vida por muito tempo',
   'Como um garoto de programa',
   'Porque não inovar, e por aqui te pedir de forma simples e direta',
+  'Então eu só preciso te fazer uma pergunta...',
   'Camila',
   'Quer namorar comigo?',
 ]
@@ -118,9 +119,19 @@ export default function App() {
   const [hearts, setHearts]               = useState([])
   const [showSkip, setShowSkip]           = useState(false)
   const [yesContinue, setYesContinue]     = useState(false)
+  const [isAdvancing, setIsAdvancing]     = useState(false)
   const termRef    = useRef(null)
   const noRef      = useRef(null)
   const heartIdRef = useRef(0)
+  const bgmRef     = useRef(null)
+
+  async function pauseBeforeNext(action, delay = 900) {
+    if (isAdvancing) return
+    setIsAdvancing(true)
+    await sleep(delay)
+    action()
+    setIsAdvancing(false)
+  }
 
   // ── terminal auto-play ──
   useEffect(() => {
@@ -143,6 +154,45 @@ export default function App() {
   useEffect(() => {
     if (termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight
   }, [shown])
+
+  // ── música de fundo (opcional) ──
+  useEffect(() => {
+    let disposed = false
+    let unlockHandler = null
+
+    async function setupBgm() {
+      try {
+        const head = await fetch('/audio/nossa-musica.mp3', { method: 'HEAD' })
+        if (!head.ok || disposed) return
+
+        const audio = new Audio('/audio/nossa-musica.mp3')
+        audio.loop = true
+        audio.volume = 0.14
+        bgmRef.current = audio
+
+        const tryPlay = () => {
+          audio.play().catch(() => {})
+        }
+
+        unlockHandler = tryPlay
+        tryPlay()
+        window.addEventListener('pointerdown', tryPlay)
+      } catch {
+        // Sem arquivo de áudio: segue sem música.
+      }
+    }
+
+    setupBgm()
+
+    return () => {
+      disposed = true
+      if (unlockHandler) window.removeEventListener('pointerdown', unlockHandler)
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+        bgmRef.current.src = ''
+      }
+    }
+  }, [])
 
   // ── digitação do capítulo 1 ──
   useEffect(() => {
@@ -341,8 +391,14 @@ export default function App() {
     const slide = BRIDGE_SLIDES[bridgeIdx]
     const isLast = bridgeIdx === BRIDGE_SLIDES.length - 1
     function nextBridge() {
-      if (isLast) { setPhotoIdx(0); setPhase('c2') }
-      else setBridgeIdx(p => p + 1)
+      pauseBeforeNext(() => {
+        if (isLast) {
+          setPhotoIdx(0)
+          setPhase('c2')
+        } else {
+          setBridgeIdx(p => p + 1)
+        }
+      })
     }
 
     if (slide.type === 'photo') {
@@ -359,7 +415,9 @@ export default function App() {
                 {bridgeTyping && <span className="cursor">█</span>}
               </p>
               {!bridgeTyping && (
-                <button className="ch-btn" onClick={nextBridge}>próxima →</button>
+                <button className={`ch-btn${isAdvancing ? ' is-paused' : ''}`} disabled={isAdvancing} onClick={nextBridge}>
+                  {isAdvancing ? '...' : 'próxima →'}
+                </button>
               )}
             </div>
           </div>
@@ -380,8 +438,8 @@ export default function App() {
             {bridgeTyping && <span className="cursor">█</span>}
           </p>
           {!bridgeTyping && (
-            <button className="ch-btn" onClick={e => { e.stopPropagation(); nextBridge() }}>
-              {isLast ? 'sim, lembro 🤍' : 'continuar →'}
+            <button className={`ch-btn${isAdvancing ? ' is-paused' : ''}`} disabled={isAdvancing} onClick={e => { e.stopPropagation(); nextBridge() }}>
+              {isAdvancing ? '...' : isLast ? 'sim, lembro 🤍' : 'continuar →'}
             </button>
           )}
         </div>
@@ -469,8 +527,8 @@ export default function App() {
         ))}
         <div className="yes-content">
           <div className="yes-heart">❤️</div>
-          <h1>Ela disse SIM! 🎉</h1>
-          <p>Você é a pessoa mais especial do meu mundo 🥰</p>
+          <h1>Você disse SIM! ❤️</h1>
+          <p>Agora é oficial... e eu não podia estar mais feliz.</p>
           {yesContinue && (
             <button className="ch-btn yes-continue-btn" onClick={() => setSaid('ending')}>
               continuar →
@@ -486,9 +544,13 @@ export default function App() {
     function runAway() {
       const btn = noRef.current
       if (!btn) return
-      const vw = window.innerWidth - btn.offsetWidth - 20
-      const vh = window.innerHeight - btn.offsetHeight - 20
-      setNoPos({ x: Math.max(10, Math.floor(Math.random() * vw)), y: Math.max(10, Math.floor(Math.random() * vh)) })
+      const minX = Math.max(16, Math.floor(window.innerWidth * 0.15))
+      const maxX = Math.max(minX, Math.floor(window.innerWidth * 0.85) - btn.offsetWidth)
+      const minY = Math.max(80, Math.floor(window.innerHeight * 0.52))
+      const maxY = Math.max(minY, Math.floor(window.innerHeight * 0.88) - btn.offsetHeight)
+      const x = minX + Math.floor(Math.random() * (maxX - minX + 1))
+      const y = minY + Math.floor(Math.random() * (maxY - minY + 1))
+      setNoPos({ x, y })
       setNoClickCount(c => c + 1)
     }
     return (
@@ -504,8 +566,15 @@ export default function App() {
             {propTyping && <span className="cursor">█</span>}
           </p>
           {!propTyping && !isLast && (
-            <button className="ch-btn" onClick={e => { e.stopPropagation(); setPropIdx(p => p + 1) }}>
-              continuar →
+            <button
+              className={`ch-btn${isAdvancing ? ' is-paused' : ''}`}
+              disabled={isAdvancing}
+              onClick={e => {
+                e.stopPropagation()
+                pauseBeforeNext(() => setPropIdx(p => p + 1))
+              }}
+            >
+              {isAdvancing ? 'respira...' : 'continuar →'}
             </button>
           )}
           {!propTyping && isLast && (
@@ -522,7 +591,13 @@ export default function App() {
           )}
           {!propTyping && isLast && (
             <div className="proposal-btns">
-              <button className="btn yes-btn" onClick={e => { e.stopPropagation(); setSaid('yes') }}>
+              <button
+                className="btn yes-btn"
+                onClick={e => {
+                  e.stopPropagation()
+                  setTimeout(() => setSaid('yes'), 520)
+                }}
+              >
                 Sim! 💖
               </button>
               <button
