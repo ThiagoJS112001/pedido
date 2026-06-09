@@ -75,7 +75,6 @@ const PROPOSAL_SLIDES = [
   'E como eu quero continuar tendo você na minha vida por muito tempo',
   'Como um garoto de programa',
   'Porque não inovar, e por aqui te pedir de forma simples e direta',
-  'Então eu só preciso te fazer uma pergunta...',
   'Camila',
   'Quer namorar comigo?',
 ]
