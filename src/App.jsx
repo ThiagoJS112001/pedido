@@ -100,6 +100,49 @@ function sleep(ms) {
   return new Promise(r => setTimeout(r, ms))
 }
 
+function ProposalVideoComponent() {
+  const [isClicked, setIsClicked] = useState(false)
+
+  return (
+    <div className="proposal-video-wrap" onClick={(e) => e.stopPropagation()}>
+      <div className="proposal-video-replacement">
+        <div className="video-content">
+          {!isClicked ? (
+            <>
+              <div className="video-icon">🎬</div>
+              <h3>Nosso Vídeo Especial</h3>
+              <p>Um momento só nosso</p>
+              <button 
+                className="video-play-btn"
+                onClick={() => setIsClicked(true)}
+              >
+                Clique aqui para assistir ✨
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="video-icon">❤️</div>
+              <h3>Esse momento é nosso</h3>
+              <p>Guardado no coração ❤️</p>
+              <p className="video-message">Você é meu vídeo favorito</p>
+              <button 
+                className="video-close-btn"
+                onClick={() => setIsClicked(false)}
+              >
+                Voltar
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
+
 export default function App() {
   const [phase, setPhase]         = useState('terminal')
   const [shown, setShown]         = useState([])
@@ -630,16 +673,7 @@ export default function App() {
             </button>
           )}
           {!propTyping && isLast && (
-            <div className="proposal-video-wrap" onClick={e => e.stopPropagation()}>
-              <iframe
-                src="https://www.instagram.com/reel/DOXtmb3jbhj/embed/"
-                className="proposal-video"
-                allowFullScreen
-                scrolling="no"
-                frameBorder="0"
-                title="reel"
-              />
-            </div>
+            <ProposalVideoComponent />
           )}
           {!propTyping && isLast && (
             <div className="proposal-btns">
