@@ -96,10 +96,6 @@ const NO_MESSAGES = [
   'Eu acredito em você!',
 ]
 
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms))
-}
-
 function ProposalVideoComponent() {
   const [isClicked, setIsClicked] = useState(false)
 
